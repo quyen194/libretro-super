@@ -45,7 +45,7 @@ fetch_project()
 	echo "=== Fetched ==="
 }
 
-fetch_project "https://github.com/libretro/RetroArch.git" "retroarch" "libretro/libretro ARB"
+fetch_project "https://github.com/quyen194/RetroArch.git" "retroarch" "libretro/libretro ARB"
 
 update_header "retroarch" "RetroArch (1/55)"
 #ignore bsnes; it's not on github, so we can't push to it

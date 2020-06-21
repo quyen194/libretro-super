@@ -85,7 +85,7 @@ convert_xmb_assets()
 					fi
 					if [ $is_svg ] ; then
 					echo convert -background none -density $density "$src_file" -resize $scale_factor "$dst_file"
-					convert -background none -density $density "$src_file" -resize $scale_factor "$dst_file"
+					convert -density $density "$src_file" -resize $scale_factor "$dst_file"
 					else
 					echo convert -background none "$src_file" -resize $scale_factor "$dst_file"
 					convert -background none "$src_file" -resize $scale_factor "$dst_file"
@@ -805,7 +805,9 @@ buildbot_pull(){
 
 				echo "pulling changes from repo $URL... "
 				HEAD="$(git rev-parse HEAD)"
-				git pull
+				if [ "${GIT_FORCE_PULL}" = "YES" ]; then
+					git pull
+				fi
 
 				if [ "${TYPE}" = "PROJECT" ]; then
 					RADIR=$DIR
@@ -881,7 +883,9 @@ if [ "${RA}" = "YES" ]; then
 
 	if [ "${BUILD}" = "YES" ] || [ "${FORCE}" = "YES" ] || [ "${FORCE_RETROARCH_BUILD}" = "YES" ] || [ "${CORES_BUILT}" = "YES" ]; then
 		cd "$RADIR"
-		git clean -xdf
+		if [ "${RA_FORCE_REBUILD}" = "YES" ]; then
+			git clean -xdf
+		fi
 		echo "WORKINGDIR=$PWD"
 		echo "RADIR=$RADIR"
 
@@ -1526,33 +1530,38 @@ if [ "${PLATFORM}" == "vita" ] && [ "${RA}" == "YES" ]; then
 
 		cd $WORK/$RADIR
 		cp retroarch.cfg retroarch.default.cfg
-		
-		mkdir -p $WORK/$RADIR/pkg/vita/retroarch
-		mkdir -p $WORK/$RADIR/pkg/vita/retroarch/info
-		mkdir -p $WORK/$RADIR/pkg/vita/retroarch/remaps
-		mkdir -p $WORK/$RADIR/pkg/vita/retroarch/cheats
-		mkdir -p $WORK/$RADIR/pkg/vita/retroarch/filters
-		mkdir -p $WORK/$RADIR/pkg/vita/retroarch/filters/audio
-		mkdir -p $WORK/$RADIR/pkg/vita/retroarch/filters/video
-		mkdir -p $WORK/$RADIR/pkg/vita/retroarch/database
-		mkdir -p $WORK/$RADIR/pkg/vita/retroarch/database/rdb
-		mkdir -p $WORK/$RADIR/pkg/vita/retroarch/database/cursors
-		mkdir -p $WORK/$RADIR/pkg/vita/retroarch/assets/glui
+
+		if [ "${RA_FORCE_REBUILD}" = "YES" ]; then
+			mkdir -p $WORK/$RADIR/pkg/vita/retroarch
+			mkdir -p $WORK/$RADIR/pkg/vita/retroarch/info
+			mkdir -p $WORK/$RADIR/pkg/vita/retroarch/remaps
+			mkdir -p $WORK/$RADIR/pkg/vita/retroarch/cheats
+			mkdir -p $WORK/$RADIR/pkg/vita/retroarch/filters
+			mkdir -p $WORK/$RADIR/pkg/vita/retroarch/filters/audio
+			mkdir -p $WORK/$RADIR/pkg/vita/retroarch/filters/video
+			mkdir -p $WORK/$RADIR/pkg/vita/retroarch/database
+			mkdir -p $WORK/$RADIR/pkg/vita/retroarch/database/rdb
+			mkdir -p $WORK/$RADIR/pkg/vita/retroarch/database/cursors
+			mkdir -p $WORK/$RADIR/pkg/vita/retroarch/assets/glui
 
 
-		cp $WORK/$RADIR/gfx/video_filters/*.filt $WORK/$RADIR/pkg/vita/retroarch/filters/video/
-		cp $WORK/$RADIR/libretro-common/audio/dsp_filters/*.dsp $WORK/$RADIR/pkg/vita/retroarch/filters/audio/
-		cp $RARCH_DIST_DIR/../info/*.info $WORK/$RADIR/pkg/vita/retroarch/info/
-		cp $WORK/$RADIR/media/libretrodb/rdb/*.rdb $WORK/$RADIR/pkg/vita/retroarch/database/rdb/
-		cp $WORK/$RADIR/media/libretrodb/cursors/*.dbc $WORK/$RADIR/pkg/vita/retroarch/database/cursors/
-		cp  $WORK/$RADIR/media/libretrodb/cursors/*.dbc $WORK/$RADIR/pkg/vita/retroarch/database/cursors/
-		cp -r $WORK/$RADIR/media/assets/rgui  $WORK/$RADIR/pkg/vita/retroarch/assets
-		cp -r $WORK/$RADIR/media/assets/glui  $WORK/$RADIR/pkg/vita/retroarch/assets
-		cp -r $WORK/$RADIR/media/assets/ozone $WORK/$RADIR/pkg/vita/retroarch/assets
+			cp $WORK/$RADIR/gfx/video_filters/*.filt $WORK/$RADIR/pkg/vita/retroarch/filters/video/
+			cp $WORK/$RADIR/libretro-common/audio/dsp_filters/*.dsp $WORK/$RADIR/pkg/vita/retroarch/filters/audio/
+			cp $RARCH_DIST_DIR/../info/*.info $WORK/$RADIR/pkg/vita/retroarch/info/
+			cp $WORK/$RADIR/media/libretrodb/rdb/*.rdb $WORK/$RADIR/pkg/vita/retroarch/database/rdb/
+			cp $WORK/$RADIR/media/libretrodb/cursors/*.dbc $WORK/$RADIR/pkg/vita/retroarch/database/cursors/
+			cp  $WORK/$RADIR/media/libretrodb/cursors/*.dbc $WORK/$RADIR/pkg/vita/retroarch/database/cursors/
+			cp -r $WORK/$RADIR/media/assets/rgui  $WORK/$RADIR/pkg/vita/retroarch/assets
+			cp -r $WORK/$RADIR/media/assets/glui  $WORK/$RADIR/pkg/vita/retroarch/assets
+			cp -r $WORK/$RADIR/media/assets/ozone $WORK/$RADIR/pkg/vita/retroarch/assets
+
+			convert_xmb_assets $WORK/$RADIR/media/assets/xmb $WORK/$RADIR/pkg/vita/retroarch/assets/xmb 64x64! 960x544! 90
 		
-		convert_xmb_assets $WORK/$RADIR/media/assets/xmb $WORK/$RADIR/pkg/vita/retroarch/assets/xmb 64x64! 960x544! 90
-		
+		fi
 	fi
+
+	rm $WORK/dist/vita/$SAMPLE_PACKAGE
+	7z a -tzip $WORK/dist/vita/$SAMPLE_PACKAGE -r $WORK/$RADIR/pkg/vita/retroarch.vpk/vpk/*
 fi
 
 if [ "${PLATFORM}" == "ps3" ] && [ "${RA}" == "YES" ]; then
